@@ -1,5 +1,27 @@
 {
-  "days": {},
+  "days": {
+    "2026-09-23-pm": {
+      "activity": "Rodrigo will pick up ruben in Day Care",
+      "person": "",
+      "place": "daycare",
+      "time": "",
+      "u": 1789976788645
+    },
+    "2026-09-24-am": {
+      "activity": "",
+      "person": "p1",
+      "place": "daycare",
+      "time": "",
+      "u": 1789976824804
+    },
+    "2026-09-24-pm": {
+      "activity": "",
+      "person": "p1",
+      "place": "daycare",
+      "time": "",
+      "u": 1789976827724
+    }
+  },
   "meta": {
     "childName": "Ruben",
     "u": 1789977237023
