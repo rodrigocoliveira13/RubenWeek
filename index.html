@@ -1,0 +1,908 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Our week</title>
+<meta name="theme-color" content="#ECEFEA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#121918" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧸</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,500..800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ECEFEA; --surface:#FAFBF8; --ink:#1A2B2A; --muted:#5B6966; --line:#CDD5CE;
+  --warn:#B45309; --focus:#2F6DB5; --tint:16%;
+  --display:"Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --body:"Atkinson Hyperlegible", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#121918; --surface:#1A2322; --ink:#E4EBE7; --muted:#97A6A2; --line:#2D3A38;
+         --warn:#F0A049; --focus:#7FB0F0; --tint:26%; }
+}
+*{ box-sizing:border-box }
+html{ -webkit-text-size-adjust:100%; height:100% }
+body{
+  margin:0; min-height:100%; background:var(--bg); color:var(--ink);
+  font:400 16px/1.45 var(--body);
+  padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px);
+}
+button, input{ font:inherit; color:inherit }
+:focus-visible{ outline:3px solid var(--focus); outline-offset:2px }
+[hidden]{ display:none !important }
+
+.wrap{ max-width:1200px; margin:0 auto; padding:clamp(1rem,3vw,2.25rem) clamp(.85rem,3vw,2.25rem) 3rem }
+
+/* Header */
+.top{ display:grid; grid-template-columns:1fr auto; align-items:end; gap:1rem 1.5rem; margin-bottom:1.75rem }
+.kid{ margin:0 0 .35rem; font-size:1.05rem; color:var(--muted) }
+.weeknum{ margin:0; font-family:var(--display); font-weight:800; font-size:clamp(2.75rem,8vw,5rem); line-height:.88; letter-spacing:-.025em }
+.range{ margin:.55rem 0 0; font-size:1.1rem }
+.controls{ display:flex; flex-direction:column; align-items:flex-end; gap:.6rem }
+.nav{ display:flex; gap:.4rem }
+.meta{ display:flex; align-items:center; gap:.75rem }
+.btn{ display:inline-flex; align-items:center; justify-content:center; gap:.4rem; min-height:2.6rem; padding:.45rem 1rem;
+  border:1px solid var(--line); border-radius:999px; background:var(--surface); cursor:pointer; line-height:1.1 }
+.btn:hover{ border-color:var(--muted) }
+.btn:disabled{ opacity:.45; cursor:default; border-color:var(--line) }
+.btn.icon{ width:2.6rem; padding:0; font-size:1.35rem }
+.btn.primary{ background:var(--ink); color:var(--surface); border-color:var(--ink); font-weight:700 }
+.btn.quiet{ background:transparent }
+.status{ border:0; background:none; padding:.25rem 0; color:var(--muted); font-size:.92rem; cursor:pointer; text-align:right }
+.status.err{ color:var(--warn); font-weight:700 }
+
+/* Week grid */
+.week{ display:grid; grid-template-columns:6.25rem repeat(var(--n,5), minmax(0,1fr)); gap:.5rem }
+.day{ display:contents }
+.corner{ grid-row:1; grid-column:1 }
+.rowlabel{ grid-column:1; padding-top:.75rem; font-family:var(--display); font-weight:600; font-size:1.08rem }
+.rowlabel.am{ grid-row:2 } .rowlabel.pm{ grid-row:3 }
+.day-head{ grid-row:1; grid-column:var(--c); display:flex; align-items:baseline; gap:.45rem; padding:0 .15rem .45rem; border-bottom:3px solid transparent }
+.day-head .dname{ color:var(--muted) }
+.day-head .long{ display:none }
+.day-head .dnum{ font-family:var(--display); font-weight:700; font-size:1.6rem; line-height:1 }
+.day-head .tag{ margin-left:auto; font-size:.85rem; font-weight:700 }
+.day-head.today{ border-bottom-color:var(--ink) }
+.day-head.today .dname{ color:var(--ink) }
+
+.cell{
+  --pc:transparent;
+  position:relative; display:flex; flex-direction:column; align-items:stretch; gap:.2rem;
+  min-height:8rem; padding:.65rem .75rem .7rem .95rem; text-align:left;
+  border:1px solid var(--line); border-radius:8px; background:var(--surface); cursor:pointer;
+}
+.cell.am{ grid-row:2; grid-column:var(--c) }
+.cell.pm{ grid-row:3; grid-column:var(--c) }
+.cell:hover{ border-color:var(--muted) }
+.cell.has-person{
+  background:color-mix(in srgb, var(--pc) var(--tint), var(--surface));
+  border-color:color-mix(in srgb, var(--pc) 40%, var(--surface));
+  box-shadow:inset 5px 0 0 var(--pc);
+}
+.cell.empty, .cell.cleared{ background:transparent; border-style:dashed }
+.cell.empty{ align-items:center; justify-content:center; color:var(--muted) }
+.cell.missing{ border:1.5px dashed var(--warn) }
+.cell.past{ opacity:.7 }
+.cell.past:hover, .cell.past:focus-visible{ opacity:1 }
+.c-slot{ display:none; font-size:.8rem; color:var(--muted) }
+.c-top{ display:flex; justify-content:space-between; align-items:baseline; gap:.4rem; font-size:.88rem }
+.c-role{ color:var(--muted) }
+.has-person .c-role{ color:color-mix(in srgb, var(--ink) 75%, var(--pc)) }
+.c-time{ font-weight:700; font-variant-numeric:tabular-nums }
+.c-who{ font-family:var(--display); font-weight:700; font-size:1.25rem; line-height:1.12; overflow-wrap:anywhere }
+.missing .c-who{ color:var(--warn); font-size:1.05rem }
+.cleared .c-who{ color:var(--muted); font-size:1rem; font-weight:600 }
+.c-act{ font-size:.93rem; line-height:1.3; overflow-wrap:anywhere }
+.c-flag{ margin-top:auto; padding-top:.3rem; font-size:.8rem; font-style:italic; color:var(--muted) }
+.c-add{ font-size:1.6rem; line-height:1; opacity:.5 }
+.cell.empty:hover .c-add{ opacity:1 }
+
+/* Week change motion (user-triggered) */
+@keyframes fromRight{ from{ opacity:0; transform:translateX(16px) } }
+@keyframes fromLeft{ from{ opacity:0; transform:translateX(-16px) } }
+.week.go-next .cell, .week.go-next .day-head{ animation:fromRight .22s ease-out }
+.week.go-prev .cell, .week.go-prev .day-head{ animation:fromLeft .22s ease-out }
+@media (prefers-reduced-motion: reduce){ .week *{ animation:none !important } }
+
+/* Summary */
+.tally{ margin-top:2rem; padding-top:1.1rem; border-top:1px solid var(--line); display:flex; flex-wrap:wrap; gap:.6rem 2.25rem; align-items:baseline }
+.t-item{ display:flex; align-items:baseline; gap:.5rem }
+.t-item .sw{ align-self:center; width:.9rem; height:.9rem; border-radius:3px; background:var(--pc) }
+.t-item strong{ font-family:var(--display); font-weight:700; font-size:1.05rem }
+.t-warn{ color:var(--warn); font-weight:700 }
+.tip{ flex-basis:100%; margin:0; color:var(--muted); max-width:64ch }
+
+/* Dialogs */
+dialog{ width:min(34rem, calc(100vw - 1.25rem)); max-height:calc(100dvh - 1.5rem); padding:0; overflow:auto;
+  border:0; border-radius:14px; background:var(--surface); color:var(--ink); box-shadow:0 24px 70px rgba(10,20,20,.35) }
+dialog::backdrop{ background:rgba(18,28,27,.5) }
+.sheet{ display:flex; flex-direction:column; gap:1.1rem; padding:1.35rem 1.35rem 1.1rem }
+.sheet h2{ margin:0; font-family:var(--display); font-weight:700; font-size:1.5rem; line-height:1.15 }
+.sheet h3{ margin:0 0 .5rem; font-family:var(--display); font-weight:700; font-size:1.1rem }
+.sheet section{ border-top:1px solid var(--line); padding-top:1rem }
+fieldset{ border:0; margin:0; padding:0; min-width:0 }
+legend{ padding:0; margin-bottom:.5rem; font-weight:700 }
+.choices{ display:flex; flex-wrap:wrap; gap:.45rem }
+.choices label{ position:relative }
+.choices input{ position:absolute; inset:0; opacity:0; margin:0; cursor:pointer }
+.choices span{ display:inline-flex; align-items:center; gap:.45rem; min-height:2.5rem; padding:.4rem .95rem;
+  border:1px solid var(--line); border-radius:999px; cursor:pointer }
+.choices input:focus-visible + span{ outline:3px solid var(--focus); outline-offset:2px }
+.seg input:checked + span{ background:var(--ink); color:var(--surface); border-color:var(--ink); font-weight:700 }
+.chips span{ padding-left:.65rem }
+.chips span::before{ content:""; width:.85rem; height:.85rem; border-radius:50%; background:var(--pc); flex:none }
+.chips .nobody span::before{ background:transparent; border:1.5px dashed var(--muted) }
+.chips input:checked + span{ background:color-mix(in srgb, var(--pc) 22%, var(--surface)); border-color:var(--pc); box-shadow:inset 0 0 0 1px var(--pc); font-weight:700 }
+.chips .nobody input:checked + span{ background:var(--bg); border-color:var(--muted); box-shadow:inset 0 0 0 1px var(--muted) }
+.field{ display:flex; flex-direction:column; gap:.3rem }
+.field > span{ font-weight:700; font-size:.93rem }
+.text{ min-height:2.65rem; padding:.5rem .7rem; border:1px solid var(--line); border-radius:8px; background:var(--bg); width:100% }
+.grid2{ display:grid; grid-template-columns:1fr 1fr; gap:.75rem }
+.check{ display:flex; gap:.6rem; align-items:flex-start; cursor:pointer }
+.check input{ width:1.2rem; height:1.2rem; margin:.1rem 0 0; accent-color:var(--ink); flex:none }
+.hint{ margin:0 0 .7rem; color:var(--muted); font-size:.92rem; max-width:60ch }
+.msg{ margin:.6rem 0 0; font-size:.92rem }
+.row{ display:flex; flex-wrap:wrap; gap:.5rem }
+.actions{ display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; padding-top:.2rem }
+.actions .spacer{ flex:1 }
+.person-row{ display:flex; gap:.5rem; align-items:center; margin-bottom:.5rem }
+.person-row .text{ flex:1 }
+.pcolor{ width:2.65rem; height:2.65rem; padding:.2rem; border:1px solid var(--line); border-radius:8px; background:var(--bg); cursor:pointer; flex:none }
+.filebtn{ position:relative; overflow:hidden }
+.filebtn input{ position:absolute; inset:0; opacity:0; cursor:pointer }
+
+/* Phones: each day becomes a row, morning and afternoon side by side */
+@media (max-width: 760px){
+  .top{ grid-template-columns:1fr }
+  .controls{ align-items:stretch; gap:.35rem }
+  .nav #todayBtn{ flex:1 }
+  .meta{ justify-content:space-between }
+  .status{ text-align:left }
+  .week{ grid-template-columns:1fr 1fr; gap:.45rem }
+  .corner, .rowlabel{ display:none }
+  .day-head{ grid-column:1 / -1; grid-row:auto; margin-top:.9rem; padding-bottom:.3rem }
+  .day-head .long{ display:inline } .day-head .short{ display:none }
+  .day-head .dname{ font-family:var(--display); font-weight:700; font-size:1.15rem; color:var(--ink) }
+  .day-head .dnum{ font-size:1.15rem; font-weight:500; color:var(--muted) }
+  .cell.am, .cell.pm{ grid-row:auto; grid-column:auto; min-height:6.25rem }
+  .c-slot{ display:block }
+  .grid2{ grid-template-columns:1fr }
+}
+@media print{
+  body{ background:#fff }
+  .controls, .tip{ display:none }
+  .cell{ break-inside:avoid }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="kid" id="kid">Our schedule</p>
+      <h1 class="weeknum" id="weeknum">Week</h1>
+      <p class="range" id="range"></p>
+    </div>
+    <div class="controls">
+      <div class="nav">
+        <button class="btn icon" id="prevBtn" type="button" aria-label="Previous week" title="Previous week (←)">‹</button>
+        <button class="btn" id="todayBtn" type="button">This week</button>
+        <button class="btn icon" id="nextBtn" type="button" aria-label="Next week" title="Next week (→)">›</button>
+      </div>
+      <div class="meta">
+        <button class="status" id="status" type="button"></button>
+        <button class="btn quiet" id="settingsBtn" type="button">Settings</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="week" id="week" aria-label="Week schedule"></div>
+    <div class="tally" id="tally" aria-live="polite"></div>
+  </main>
+</div>
+
+<!-- Edit a half-day -->
+<dialog id="editDlg" aria-labelledby="editTitle">
+  <form method="dialog" class="sheet" id="editForm">
+    <h2 id="editTitle">Day</h2>
+    <fieldset class="choices seg">
+      <legend>Where is he?</legend>
+      <label><input type="radio" name="place" value="daycare"><span>Daycare</span></label>
+      <label><input type="radio" name="place" value="home"><span>Home</span></label>
+      <label><input type="radio" name="place" value="other"><span>Elsewhere</span></label>
+    </fieldset>
+    <fieldset class="choices chips">
+      <legend id="personLegend">Who?</legend>
+      <div class="choices" id="personOpts"></div>
+    </fieldset>
+    <div class="grid2">
+      <label class="field"><span id="timeLabel">Time</span><input class="text" type="time" id="fTime"></label>
+    </div>
+    <label class="field"><span>Activity or note</span>
+      <input class="text" type="text" id="fAct" maxlength="200" autocomplete="off" placeholder="Baby swimming, doctor, grandparents visiting…">
+    </label>
+    <label class="check"><input type="checkbox" id="fUsual"><span id="usualLabel">Make this the usual</span></label>
+    <div class="actions">
+      <button class="btn quiet" type="button" id="revertBtn">Back to usual</button>
+      <button class="btn quiet" type="button" id="clearBtn">Clear</button>
+      <span class="spacer"></span>
+      <button class="btn quiet" type="button" id="cancelBtn">Cancel</button>
+      <button class="btn primary" value="save">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Settings -->
+<dialog id="setDlg" aria-labelledby="setTitle">
+  <form method="dialog" class="sheet" id="setForm">
+    <h2 id="setTitle">Settings</h2>
+    <section>
+      <h3>Your son</h3>
+      <label class="field"><span>Name</span><input class="text" type="text" id="childName" autocomplete="off" placeholder="Shown at the top of the page"></label>
+    </section>
+    <section>
+      <h3>People</h3>
+      <p class="hint">Everyone who drops him off, picks him up or looks after him. Each person gets a colour on the week.</p>
+      <div id="peopleList"></div>
+      <button class="btn quiet" type="button" id="addPerson">Add person</button>
+    </section>
+    <section>
+      <h3>This device</h3>
+      <label class="check"><input type="checkbox" id="showWeekend"><span>Show Saturday and Sunday</span></label>
+    </section>
+    <section>
+      <h3>Share between phones</h3>
+      <p class="hint">Keeps the schedule in a file in a private GitHub repository, so every device connected to it sees the same week. Without this, the schedule stays in this browser only.</p>
+      <div class="grid2">
+        <label class="field"><span>GitHub user</span><input class="text" type="text" id="ghOwner" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="your-username"></label>
+        <label class="field"><span>Repository</span><input class="text" type="text" id="ghRepo" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="family-schedule-data"></label>
+        <label class="field"><span>Branch</span><input class="text" type="text" id="ghBranch" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="main"></label>
+        <label class="field"><span>File</span><input class="text" type="text" id="ghPath" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="schedule.json"></label>
+      </div>
+      <label class="field" style="margin-top:.75rem"><span>Access token</span><input class="text" type="password" id="ghToken" autocomplete="off" spellcheck="false" placeholder="github_pat_…"></label>
+      <div class="row" style="margin-top:.75rem">
+        <button class="btn primary" type="button" id="ghConnect">Connect and sync</button>
+        <button class="btn quiet" type="button" id="ghDisconnect">Stop syncing on this device</button>
+      </div>
+      <p class="msg" id="ghMsg" role="status"></p>
+    </section>
+    <section>
+      <h3>Backup</h3>
+      <div class="row">
+        <button class="btn quiet" type="button" id="exportBtn">Download backup</button>
+        <label class="btn quiet filebtn">Restore a backup<input type="file" id="importFile" accept=".json,application/json"></label>
+      </div>
+      <p class="msg" id="backupMsg" role="status"></p>
+    </section>
+    <div class="actions"><span class="spacer"></span><button class="btn primary" value="done">Done</button></div>
+  </form>
+</dialog>
+
+<script>
+(() => {
+'use strict';
+
+/* ---------- constants ---------- */
+const STORE_KEY = 'daycareWeek.data.v1';
+const PREFS_KEY = 'daycareWeek.prefs.v1';
+const PALETTE = ['#2f6db5','#c8374b','#4f8a3c','#d9831f','#8a5ab5','#1c8c8c','#b5487f','#6b7280'];
+const SLOTS = ['am','pm'];
+const SLOT_NAME = { am:'Morning', pm:'Afternoon' };
+const DAY_LONG = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const DAY_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const PLACES = ['daycare','home','other'];
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+
+/* ---------- dates ---------- */
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseYmd = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+function startOfWeek(d){ const x = new Date(d.getFullYear(), d.getMonth(), d.getDate()); x.setDate(x.getDate() - (x.getDay() + 6) % 7); return x; }
+function isoWeek(d){
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);
+  const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  return Math.ceil(((t - y0) / 864e5 + 1) / 7);
+}
+function rangeLabel(a, b){
+  if (a.getFullYear() !== b.getFullYear()) return `${a.getDate()} ${MONTHS[a.getMonth()]} ${a.getFullYear()} to ${b.getDate()} ${MONTHS[b.getMonth()]} ${b.getFullYear()}`;
+  if (a.getMonth() !== b.getMonth()) return `${a.getDate()} ${MONTHS[a.getMonth()]} to ${b.getDate()} ${MONTHS[b.getMonth()]} ${b.getFullYear()}`;
+  return `${a.getDate()}–${b.getDate()} ${MONTHS[a.getMonth()]} ${a.getFullYear()}`;
+}
+const hhmm = ts => { const d = new Date(ts); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+
+/* ---------- data model ----------
+   template: usual week, keyed "1-am" … "7-pm" (1 = Monday)
+   days:     one-off changes, keyed "2026-09-21-am"
+   Every entry carries u (last-changed time) so two devices can merge.
+   {del:true,u} marks an entry as removed. */
+function defaultData(){
+  return {
+    v: 1,
+    meta: { childName: '', u: 0 },
+    people: { list: [
+      { id: 'p1', name: 'Rodrigo', color: PALETTE[0] },
+      { id: 'p2', name: 'Mom', color: PALETTE[1] }
+    ], u: 0 },
+    template: {},
+    days: {}
+  };
+}
+function cleanCell(v){
+  if (!v || typeof v !== 'object') return null;
+  if (v.del) return { del: true, u: +v.u || 0 };
+  return {
+    place: PLACES.includes(v.place) ? v.place : '',
+    person: String(v.person || ''),
+    time: /^\d{2}:\d{2}$/.test(v.time || '') ? v.time : '',
+    activity: String(v.activity || '').slice(0, 200),
+    u: +v.u || 0
+  };
+}
+function cleanMap(m){
+  const out = {};
+  if (m && typeof m === 'object') for (const [k, v] of Object.entries(m)) { const c = cleanCell(v); if (c) out[k] = c; }
+  return out;
+}
+function normalize(d){
+  const base = defaultData();
+  if (!d || typeof d !== 'object') return base;
+  const meta = d.meta && typeof d.meta === 'object' ? { childName: String(d.meta.childName || ''), u: +d.meta.u || 0 } : base.meta;
+  const people = d.people && Array.isArray(d.people.list)
+    ? { list: d.people.list.filter(p => p && p.id).map(p => ({
+          id: String(p.id), name: String(p.name || ''),
+          color: /^#[0-9a-f]{6}$/i.test(p.color || '') ? p.color.toLowerCase() : PALETTE[7] })),
+        u: +d.people.u || 0 }
+    : base.people;
+  return { v: 1, meta, people, template: cleanMap(d.template), days: cleanMap(d.days) };
+}
+
+/* Deterministic JSON (sorted keys) so comparisons and file diffs are stable */
+function stable(v){
+  if (Array.isArray(v)) return '[' + v.map(stable).join(',') + ']';
+  if (v && typeof v === 'object') return '{' + Object.keys(v).sort().filter(k => v[k] !== undefined)
+    .map(k => JSON.stringify(k) + ':' + stable(v[k])).join(',') + '}';
+  return JSON.stringify(v);
+}
+const pretty = d => JSON.stringify(JSON.parse(stable(d)), null, 2) + '\n';
+
+/* Merge two copies: newest entry wins, key by key */
+function newer(a, b){
+  if (!a) return b; if (!b) return a;
+  const ua = +a.u || 0, ub = +b.u || 0;
+  if (ua !== ub) return ub > ua ? b : a;
+  return stable(b) > stable(a) ? b : a;
+}
+function mergeMap(x = {}, y = {}){
+  const out = {};
+  for (const k of new Set([...Object.keys(x), ...Object.keys(y)])) out[k] = newer(x[k], y[k]);
+  return out;
+}
+function merge(a, b){
+  return { v: 1, meta: newer(a.meta, b.meta), people: newer(a.people, b.people),
+           template: mergeMap(a.template, b.template), days: mergeMap(a.days, b.days) };
+}
+
+const live = x => (x && !x.del) ? x : null;
+const isEmpty = c => !c || (!c.place && !c.person && !c.time && !c.activity);
+const sameCell = (a, b) => ['place','person','time','activity'].every(k => ((a && a[k]) || '') === ((b && b[k]) || ''));
+
+function effective(ds, wd, slot){
+  const o = data.days[`${ds}-${slot}`];
+  const t = live(data.template[`${wd}-${slot}`]);
+  if (o && !o.del) return { cell: o, source: 'day', usual: t };
+  if (t) return { cell: t, source: 'usual', usual: t };
+  return { cell: null, source: 'none', usual: null };
+}
+const personById = id => data.people.list.find(p => p.id === id) || null;
+const displayName = p => (p && p.name.trim()) || 'Unnamed';
+
+function roleText(place, slot, hasPerson){
+  if (place === 'daycare') return hasPerson ? (slot === 'am' ? 'Drop-off' : 'Pick-up') : 'Daycare';
+  if (place === 'home') return hasPerson ? 'Home with' : 'Home';
+  if (place === 'other') return hasPerson ? 'Out with' : 'Out';
+  return hasPerson ? 'With' : '';
+}
+
+/* ---------- storage ---------- */
+function readJSON(k){ try { const s = localStorage.getItem(k); return s ? JSON.parse(s) : null; } catch { return null; } }
+function writeStr(k, s){ try { localStorage.setItem(k, s); } catch { /* storage full or blocked: keep working in memory */ } }
+function defaultPrefs(){ return { showWeekend: false, pending: false, gh: { owner: '', repo: '', branch: 'main', path: 'schedule.json', token: '' } }; }
+
+let data = normalize(readJSON(STORE_KEY));
+let prefs = (() => { const p = Object.assign(defaultPrefs(), readJSON(PREFS_KEY) || {}); p.gh = Object.assign(defaultPrefs().gh, p.gh || {}); return p; })();
+let weekStart = startOfWeek(new Date());
+let editing = null;
+
+const saveLocal = () => writeStr(STORE_KEY, stable(data));
+const savePrefs = () => writeStr(PREFS_KEY, JSON.stringify(prefs));
+
+/* ---------- rendering ---------- */
+function renderHeader(){
+  const name = data.meta.childName.trim();
+  $('#kid').textContent = name ? `${name}’s schedule` : 'Our schedule';
+  document.title = name ? `${name}’s week` : 'Our week';
+  const end = addDays(weekStart, prefs.showWeekend ? 6 : 4);
+  $('#weeknum').textContent = `Week ${isoWeek(weekStart)}`;
+  $('#range').textContent = rangeLabel(weekStart, end);
+  $('#todayBtn').disabled = ymd(weekStart) === ymd(startOfWeek(new Date()));
+}
+
+function cellButton(d, ds, wd, slot, past){
+  const { cell, source, usual } = effective(ds, wd, slot);
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = `cell ${slot}` + (past ? ' past' : '');
+  b.dataset.ds = ds; b.dataset.wd = wd; b.dataset.slot = slot;
+  const changed = source === 'day' && !!usual && !sameCell(cell, usual);
+  let html = `<span class="c-slot">${SLOT_NAME[slot]}</span>`;
+  let summary;
+
+  if (isEmpty(cell)) {
+    b.classList.add(changed ? 'cleared' : 'empty');
+    html += changed ? `<span class="c-who">Nothing planned</span>` : `<span class="c-add" aria-hidden="true">+</span>`;
+    summary = changed ? 'nothing planned' : 'nothing yet';
+  } else {
+    const p = personById(cell.person);
+    const role = roleText(cell.place, slot, !!p);
+    const missing = cell.place === 'daycare' && !p;
+    if (p) { b.classList.add('has-person'); b.style.setProperty('--pc', p.color); }
+    if (missing) b.classList.add('missing');
+    if (role || cell.time) html += `<span class="c-top"><span class="c-role">${role}</span>${cell.time ? `<span class="c-time">${cell.time}</span>` : ''}</span>`;
+    if (p) html += `<span class="c-who">${esc(displayName(p))}</span>`;
+    else if (missing) html += `<span class="c-who">${slot === 'am' ? 'Who drops off?' : 'Who picks up?'}</span>`;
+    if (cell.activity) html += `<span class="c-act">${esc(cell.activity)}</span>`;
+    summary = [role, p ? displayName(p) : (missing ? 'nobody assigned' : ''), cell.time, cell.activity].filter(Boolean).join(', ');
+  }
+  if (changed) html += `<span class="c-flag">Changed from usual</span>`;
+  b.innerHTML = html;
+  b.setAttribute('aria-label', `${DAY_LONG[wd - 1]} ${d.getDate()} ${MONTHS[d.getMonth()]}, ${SLOT_NAME[slot].toLowerCase()}: ${summary}${changed ? ', changed from usual' : ''}. Edit`);
+  return b;
+}
+
+function renderWeek(){
+  const n = prefs.showWeekend ? 7 : 5;
+  const grid = $('#week');
+  grid.style.setProperty('--n', n);
+  const todayStr = ymd(new Date());
+  const frag = document.createDocumentFragment();
+  frag.append(el('div', 'corner'), el('div', 'rowlabel am', 'Morning'), el('div', 'rowlabel pm', 'Afternoon'));
+  for (let i = 0; i < n; i++) {
+    const d = addDays(weekStart, i), ds = ymd(d), wd = i + 1, isToday = ds === todayStr;
+    const wrap = el('div', 'day');
+    wrap.style.setProperty('--c', i + 2);
+    const head = el('div', 'day-head' + (isToday ? ' today' : ''));
+    head.innerHTML = `<span class="dname"><span class="long">${DAY_LONG[i]}</span><span class="short">${DAY_SHORT[i]}</span></span><span class="dnum">${d.getDate()}</span>${isToday ? '<span class="tag">Today</span>' : ''}`;
+    wrap.append(head);
+    for (const slot of SLOTS) wrap.append(cellButton(d, ds, wd, slot, ds < todayStr));
+    frag.append(wrap);
+  }
+  grid.replaceChildren(frag);
+}
+
+function renderTally(){
+  const n = prefs.showWeekend ? 7 : 5;
+  const counts = new Map(data.people.list.map(p => [p.id, { drop: 0, pick: 0, care: 0 }]));
+  let missing = 0;
+  for (let i = 0; i < n; i++) {
+    const ds = ymd(addDays(weekStart, i));
+    for (const slot of SLOTS) {
+      const { cell } = effective(ds, i + 1, slot);
+      if (isEmpty(cell)) continue;
+      const c = counts.get(cell.person);
+      if (cell.place === 'daycare') {
+        if (!c) missing++;
+        else if (slot === 'am') c.drop++; else c.pick++;
+      } else if (c && cell.place) c.care++;
+    }
+  }
+  const box = $('#tally');
+  box.replaceChildren();
+  for (const p of data.people.list) {
+    const c = counts.get(p.id);
+    const parts = [];
+    if (c.drop) parts.push(plural(c.drop, 'drop-off', 'drop-offs'));
+    if (c.pick) parts.push(plural(c.pick, 'pick-up', 'pick-ups'));
+    if (c.care) parts.push(plural(c.care, 'half-day with him', 'half-days with him'));
+    if (!parts.length) continue;
+    const item = el('div', 't-item');
+    item.style.setProperty('--pc', p.color);
+    item.append(el('span', 'sw'), el('strong', null, displayName(p)), el('span', null, parts.join(', ')));
+    box.append(item);
+  }
+  if (missing) box.append(el('div', 't-warn', `${missing} daycare ${missing === 1 ? 'slot needs' : 'slots need'} someone`));
+  if (!Object.values(data.template).some(live)) {
+    box.append(el('p', 'tip', 'Set up your usual week once: open a slot, fill it in and tick “Make this the usual”. After that you only mark the exceptions.'));
+  }
+}
+
+function renderAll(){ renderHeader(); renderWeek(); renderTally(); renderStatus(); }
+
+/* ---------- week navigation ---------- */
+let animTimer;
+function goWeek(delta){
+  const target = delta === 0 ? startOfWeek(new Date()) : addDays(weekStart, 7 * delta);
+  const dir = Math.sign(target - weekStart);
+  weekStart = target;
+  const g = $('#week');
+  g.classList.remove('go-next', 'go-prev');
+  void g.offsetWidth;
+  if (dir) g.classList.add(dir > 0 ? 'go-next' : 'go-prev');
+  clearTimeout(animTimer);
+  animTimer = setTimeout(() => g.classList.remove('go-next', 'go-prev'), 400);
+  renderAll();
+}
+$('#prevBtn').addEventListener('click', () => goWeek(-1));
+$('#nextBtn').addEventListener('click', () => goWeek(1));
+$('#todayBtn').addEventListener('click', () => goWeek(0));
+document.addEventListener('keydown', e => {
+  if (document.querySelector('dialog[open]') || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.target.closest && e.target.closest('input, textarea')) return;
+  if (e.key === 'ArrowLeft') goWeek(-1);
+  else if (e.key === 'ArrowRight') goWeek(1);
+  else if (e.key === 't') goWeek(0);
+});
+
+/* ---------- commit + sync trigger ---------- */
+let pushTimer;
+function commit(){
+  saveLocal();
+  renderAll();
+  if (ghReady()) {
+    prefs.pending = true; savePrefs(); renderStatus();
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(runSync, 700);
+  }
+}
+
+/* ---------- editor ---------- */
+const editDlg = $('#editDlg'), editForm = $('#editForm');
+const placeValue = () => (editForm.querySelector('input[name=place]:checked') || {}).value || '';
+const personValue = () => (editForm.querySelector('input[name=person]:checked') || {}).value || '';
+
+function buildPersonOpts(selected){
+  const box = $('#personOpts');
+  box.replaceChildren();
+  const add = (id, name, color, cls) => {
+    const lab = el('label', cls);
+    const inp = document.createElement('input');
+    inp.type = 'radio'; inp.name = 'person'; inp.value = id; inp.checked = id === selected;
+    const span = el('span', null, name);
+    if (color) span.style.setProperty('--pc', color);
+    lab.append(inp, span);
+    box.append(lab);
+  };
+  for (const p of data.people.list) add(p.id, displayName(p), p.color);
+  add('', 'Nobody yet', null, 'nobody');
+  if (!data.people.list.some(p => p.id === selected)) box.querySelector('.nobody input').checked = true;
+}
+
+function updateEditorLabels(){
+  if (!editing) return;
+  const place = placeValue(), am = editing.slot === 'am';
+  $('#personLegend').textContent =
+    place === 'daycare' ? (am ? 'Who drops him off?' : 'Who picks him up?') :
+    place ? 'Who is he with?' : 'Who is responsible?';
+  $('#timeLabel').textContent = place === 'daycare' ? (am ? 'Drop-off time' : 'Pick-up time') : 'Time';
+}
+
+function openEditor(ds, wd, slot){
+  editing = { ds, wd, slot };
+  const { cell, source, usual } = effective(ds, wd, slot);
+  const d = parseYmd(ds);
+  $('#editTitle').textContent = `${DAY_LONG[wd - 1]} ${d.getDate()} ${MONTHS[d.getMonth()]}, ${SLOT_NAME[slot].toLowerCase()}`;
+  const place = cell ? cell.place : (wd <= 5 ? 'daycare' : '');
+  editForm.querySelectorAll('input[name=place]').forEach(r => { r.checked = r.value === place; });
+  buildPersonOpts(cell ? cell.person : '');
+  $('#fTime').value = cell ? cell.time : '';
+  $('#fAct').value = cell ? cell.activity : '';
+  $('#fUsual').checked = false;
+  $('#usualLabel').textContent = `Make this the usual for every ${DAY_LONG[wd - 1]} ${SLOT_NAME[slot].toLowerCase()}`;
+  $('#revertBtn').hidden = !(source === 'day' && usual);
+  updateEditorLabels();
+  editDlg.showModal();
+}
+
+function saveEdit(){
+  if (!editing) return;
+  const now = Date.now();
+  const { ds, wd, slot } = editing;
+  const dKey = `${ds}-${slot}`, tKey = `${wd}-${slot}`;
+  const cell = { place: placeValue(), person: personValue(), time: $('#fTime').value || '', activity: $('#fAct').value.trim(), u: now };
+  const usual = live(data.template[tKey]);
+  const hadOverride = !!data.days[dKey];
+
+  if ($('#fUsual').checked) {
+    if (isEmpty(cell)) { if (data.template[tKey]) data.template[tKey] = { del: true, u: now }; }
+    else data.template[tKey] = cell;
+    if (hadOverride) data.days[dKey] = { del: true, u: now };
+  } else if (usual && sameCell(cell, usual)) {
+    if (hadOverride) data.days[dKey] = { del: true, u: now };
+  } else if (!usual && isEmpty(cell)) {
+    if (hadOverride) data.days[dKey] = { del: true, u: now };
+  } else {
+    data.days[dKey] = cell; // one-off for this date (an empty one means "nothing planned")
+  }
+  commit();
+}
+
+editForm.addEventListener('change', e => { if (e.target.name === 'place') updateEditorLabels(); });
+editForm.addEventListener('submit', e => { if (e.submitter && e.submitter.value === 'save') saveEdit(); });
+$('#clearBtn').addEventListener('click', () => {
+  editForm.querySelectorAll('input[name=place]').forEach(r => { r.checked = false; });
+  const nb = editForm.querySelector('.nobody input'); if (nb) nb.checked = true;
+  $('#fTime').value = ''; $('#fAct').value = '';
+  updateEditorLabels();
+});
+$('#revertBtn').addEventListener('click', () => {
+  if (!editing) return;
+  data.days[`${editing.ds}-${editing.slot}`] = { del: true, u: Date.now() };
+  editDlg.close();
+  commit();
+});
+editDlg.addEventListener('close', () => { editing = null; });
+$('#cancelBtn').addEventListener('click', () => editDlg.close());
+$('#week').addEventListener('click', e => {
+  const c = e.target.closest('.cell');
+  if (c) openEditor(c.dataset.ds, +c.dataset.wd, c.dataset.slot);
+});
+
+/* Close dialogs by clicking the backdrop (only when the press started there too) */
+function backdropClose(dlg){
+  let down = false;
+  dlg.addEventListener('pointerdown', e => { down = e.target === dlg; });
+  dlg.addEventListener('click', e => { if (down && e.target === dlg) dlg.close(); down = false; });
+}
+backdropClose(editDlg);
+
+/* ---------- settings ---------- */
+const setDlg = $('#setDlg');
+backdropClose(setDlg);
+
+function personRow(p){
+  const row = el('div', 'person-row');
+  row.dataset.id = p.id;
+  const color = document.createElement('input');
+  color.type = 'color'; color.className = 'pcolor'; color.value = p.color; color.setAttribute('aria-label', `Colour for ${displayName(p)}`);
+  const name = document.createElement('input');
+  name.type = 'text'; name.className = 'text pname'; name.value = p.name; name.placeholder = 'Name'; name.setAttribute('aria-label', 'Name');
+  const rm = el('button', 'btn icon quiet', '×');
+  rm.type = 'button'; rm.setAttribute('aria-label', `Remove ${displayName(p)}`);
+  rm.addEventListener('click', () => {
+    const used = [...Object.values(data.template), ...Object.values(data.days)].some(c => live(c) && c.person === p.id);
+    if (used && !confirm(`Remove ${displayName(p)}? Slots assigned to them will show as unassigned.`)) return;
+    row.remove();
+    applySettingsForm();
+  });
+  row.append(color, name, rm);
+  return row;
+}
+
+function applySettingsForm(){
+  let changed = false;
+  const name = $('#childName').value.trim();
+  if (name !== data.meta.childName) { data.meta = { childName: name, u: Date.now() }; changed = true; }
+  const list = [...$('#peopleList').children].map(r => ({
+    id: r.dataset.id, name: r.querySelector('.pname').value.trim(), color: r.querySelector('.pcolor').value.toLowerCase()
+  }));
+  if (stable(list) !== stable(data.people.list)) { data.people = { list, u: Date.now() }; changed = true; }
+  if (changed) commit();
+}
+
+function openSettings(){
+  $('#childName').value = data.meta.childName;
+  $('#peopleList').replaceChildren(...data.people.list.map(personRow));
+  $('#showWeekend').checked = !!prefs.showWeekend;
+  const g = prefs.gh;
+  $('#ghOwner').value = g.owner; $('#ghRepo').value = g.repo; $('#ghBranch').value = g.branch;
+  $('#ghPath').value = g.path; $('#ghToken').value = g.token;
+  $('#ghMsg').textContent = syncState.state === 'error' ? syncState.msg
+    : (ghReady() && syncState.last ? `Connected. Last synced at ${hhmm(syncState.last)}.` : '');
+  $('#backupMsg').textContent = '';
+  setDlg.showModal();
+}
+
+$('#settingsBtn').addEventListener('click', openSettings);
+$('#status').addEventListener('click', openSettings);
+$('#setForm').addEventListener('change', e => {
+  if (e.target.matches('#childName, .pname, .pcolor')) applySettingsForm();
+});
+setDlg.addEventListener('close', applySettingsForm);
+$('#addPerson').addEventListener('click', () => {
+  const used = new Set([...$('#peopleList').querySelectorAll('.pcolor')].map(i => i.value.toLowerCase()));
+  const color = PALETTE.find(c => !used.has(c)) || PALETTE[used.size % PALETTE.length];
+  const row = personRow({ id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: '', color });
+  $('#peopleList').append(row);
+  row.querySelector('.pname').focus();
+});
+$('#showWeekend').addEventListener('change', e => { prefs.showWeekend = e.target.checked; savePrefs(); renderAll(); });
+
+/* Backup */
+$('#exportBtn').addEventListener('click', () => {
+  const url = URL.createObjectURL(new Blob([pretty(data)], { type: 'application/json' }));
+  const a = el('a'); a.href = url; a.download = `schedule-backup-${ymd(new Date())}.json`;
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+});
+$('#importFile').addEventListener('change', async e => {
+  const f = e.target.files[0];
+  e.target.value = '';
+  if (!f) return;
+  let incoming;
+  try { incoming = JSON.parse(await f.text()); if (!incoming || typeof incoming !== 'object' || (!incoming.days && !incoming.template)) throw 0; }
+  catch { $('#backupMsg').textContent = 'That file is not a schedule backup.'; return; }
+  if (!confirm('Replace the current schedule with this backup? Connected devices will get the backup too.')) return;
+  const now = Date.now(), r = normalize(incoming);
+  const bump = m => { for (const k in m) m[k].u = now; };
+  bump(r.template); bump(r.days); r.meta.u = now; r.people.u = now;
+  for (const k in data.template) if (!r.template[k]) r.template[k] = { del: true, u: now };
+  for (const k in data.days) if (!r.days[k]) r.days[k] = { del: true, u: now };
+  data = r;
+  commit();
+  $('#childName').value = data.meta.childName;
+  $('#peopleList').replaceChildren(...data.people.list.map(personRow));
+  $('#backupMsg').textContent = 'Backup restored.';
+});
+
+/* ---------- GitHub sync ---------- */
+const syncState = { busy: false, again: false, state: 'idle', msg: '', last: 0 };
+const ghReady = () => !!(prefs.gh.owner && prefs.gh.repo && prefs.gh.token);
+const encPath = p => p.split('/').filter(Boolean).map(encodeURIComponent).join('/');
+const repoPath = () => `/repos/${encodeURIComponent(prefs.gh.owner)}/${encodeURIComponent(prefs.gh.repo)}`;
+const contentsPath = () => `${repoPath()}/contents/${encPath(prefs.gh.path || 'schedule.json')}`;
+
+function gh(path, opts = {}){
+  const headers = { Accept: 'application/vnd.github+json', Authorization: `Bearer ${prefs.gh.token}` };
+  if (opts.body) headers['Content-Type'] = 'application/json';
+  return fetch('https://api.github.com' + path, { ...opts, headers, cache: 'no-store' });
+}
+async function ghError(r, ctx){
+  let detail = '';
+  try { detail = (await r.json()).message || ''; } catch { /* no body */ }
+  if (r.status === 401) return new Error('GitHub rejected the access token. It may have expired: create a new one and paste it in Settings.');
+  if (r.status === 403 && /rate limit/i.test(detail)) return new Error('GitHub’s rate limit was reached. Sync will try again in a few minutes.');
+  if (r.status === 403) return new Error('The token is not allowed to change this repository. Give it “Contents: Read and write” access to this repository.');
+  if (r.status === 404) return new Error(ctx === 'repo'
+    ? 'Repository not found, or the token has no access to it. Check the user and repository names and the token’s repository access.'
+    : `Could not write to the repository. Check that the branch “${prefs.gh.branch}” exists and the token has access.`);
+  return new Error(`GitHub answered with error ${r.status}${detail ? ': ' + detail : ''}.`);
+}
+function b64encode(str){
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+function b64decode(b64){
+  const bin = atob(String(b64).replace(/\s/g, ''));
+  return new TextDecoder().decode(Uint8Array.from(bin, c => c.charCodeAt(0)));
+}
+async function ghGetFile(){
+  const r = await gh(`${contentsPath()}?ref=${encodeURIComponent(prefs.gh.branch || 'main')}`);
+  if (r.status === 404) return { sha: null, data: null };
+  if (!r.ok) throw await ghError(r, 'get');
+  const j = await r.json();
+  if (Array.isArray(j) || j.type !== 'file') throw new Error('The file setting points to a folder. Use a file name such as schedule.json.');
+  let text = '';
+  if (j.content) text = b64decode(j.content);
+  else if (j.size) {
+    const br = await gh(`${repoPath()}/git/blobs/${j.sha}`);
+    if (!br.ok) throw await ghError(br, 'get');
+    text = b64decode((await br.json()).content);
+  }
+  if (!text.trim()) return { sha: j.sha, data: null };
+  try { return { sha: j.sha, data: JSON.parse(text) }; }
+  catch { throw new Error('The schedule file on GitHub is not valid JSON. Fix or delete it, then sync again.'); }
+}
+async function ghPutFile(d, sha){
+  const body = { message: 'Update schedule', content: b64encode(pretty(d)), branch: prefs.gh.branch || 'main' };
+  if (sha) body.sha = sha;
+  const r = await gh(contentsPath(), { method: 'PUT', body: JSON.stringify(body) });
+  if (r.status === 409 || (r.status === 422 && !sha)) { const e = new Error('conflict'); e.conflict = true; throw e; }
+  if (!r.ok) throw await ghError(r, 'put');
+}
+
+async function runSync(){
+  if (!ghReady()) { renderStatus(); return; }
+  if (syncState.busy) { syncState.again = true; return; }
+  syncState.busy = true; syncState.state = 'syncing'; renderStatus();
+  try {
+    for (let attempt = 0; ; attempt++) {
+      const remote = await ghGetFile();
+      const remoteData = remote.data ? normalize(remote.data) : null;
+      const merged = remoteData ? merge(data, remoteData) : data;
+      const mergedStr = stable(merged);
+      if (mergedStr !== stable(data)) { data = merged; saveLocal(); renderHeader(); renderWeek(); renderTally(); }
+      if (remoteData && mergedStr === stable(remoteData)) break;         // GitHub already up to date
+      try { await ghPutFile(merged, remote.sha); break; }
+      catch (e) { if (e.conflict && attempt < 3) continue; throw e; }   // someone else saved first: merge again
+    }
+    prefs.pending = false; savePrefs();
+    syncState.state = 'ok'; syncState.msg = ''; syncState.last = Date.now();
+  } catch (e) {
+    syncState.state = 'error';
+    syncState.msg = (e instanceof TypeError || !navigator.onLine)
+      ? 'No connection to GitHub right now. Changes are kept on this device and will sync when you are back online.'
+      : e.message;
+  } finally {
+    syncState.busy = false;
+    renderStatus();
+    if (syncState.again) { syncState.again = false; runSync(); }
+  }
+}
+
+function renderStatus(){
+  const s = $('#status');
+  s.classList.remove('err');
+  s.title = '';
+  if (!ghReady()) { s.textContent = 'Saved on this device only'; return; }
+  if (syncState.state === 'syncing') s.textContent = 'Syncing…';
+  else if (syncState.state === 'error') {
+    const offline = syncState.msg.startsWith('No connection');
+    s.textContent = offline ? 'Offline, saved here' : 'Sync problem';
+    if (!offline) s.classList.add('err');
+    s.title = syncState.msg;
+  }
+  else if (syncState.state === 'ok') s.textContent = prefs.pending ? 'Saving…' : `Synced ${hhmm(syncState.last)}`;
+  else s.textContent = prefs.pending ? 'Changes waiting to sync' : 'Connecting…';
+}
+
+$('#ghConnect').addEventListener('click', async () => {
+  const v = id => $(id).value.trim();
+  prefs.gh = { owner: v('#ghOwner'), repo: v('#ghRepo'), branch: v('#ghBranch') || 'main', path: v('#ghPath') || 'schedule.json', token: v('#ghToken') };
+  savePrefs();
+  const msg = $('#ghMsg');
+  if (!ghReady()) { msg.textContent = 'Fill in the GitHub user, repository and access token.'; renderStatus(); return; }
+  msg.textContent = 'Connecting…';
+  try {
+    const r = await gh(repoPath());
+    if (!r.ok) throw await ghError(r, 'repo');
+    const info = await r.json();
+    await runSync();
+    if (syncState.state === 'error') { msg.textContent = syncState.msg; return; }
+    msg.textContent = 'Connected and synced. Any device connected to this repository sees the same week.'
+      + (info.private ? '' : ' Note: this repository is public, so anyone can read the schedule. Make it private in its GitHub settings.');
+  } catch (e) {
+    msg.textContent = e instanceof TypeError ? 'Could not reach GitHub. Check your connection.' : e.message;
+  }
+  renderStatus();
+});
+$('#ghDisconnect').addEventListener('click', () => {
+  prefs.gh.token = ''; savePrefs();
+  $('#ghToken').value = '';
+  syncState.state = 'idle';
+  $('#ghMsg').textContent = 'This device no longer syncs. The schedule stays saved in this browser.';
+  renderStatus();
+});
+
+/* Pull changes from the other parent when the page comes back into view, and every minute */
+let lastAuto = 0;
+function autoSync(){
+  if (document.hidden || !ghReady() || Date.now() - lastAuto < 10000) return;
+  lastAuto = Date.now();
+  runSync();
+}
+document.addEventListener('visibilitychange', autoSync);
+window.addEventListener('focus', autoSync);
+window.addEventListener('online', () => { lastAuto = 0; autoSync(); });
+setInterval(autoSync, 60000);
+
+/* ---------- start ---------- */
+renderAll();
+autoSync();
+})();
+</script>
+</body>
+</html>
