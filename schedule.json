@@ -1,0 +1,24 @@
+{
+  "days": {},
+  "meta": {
+    "childName": "Ruben",
+    "u": 1789977237023
+  },
+  "people": {
+    "list": [
+      {
+        "color": "#2f6db5",
+        "id": "p1",
+        "name": "Rodrigo"
+      },
+      {
+        "color": "#c8374b",
+        "id": "p2",
+        "name": "Mom"
+      }
+    ],
+    "u": 0
+  },
+  "template": {},
+  "v": 1
+}
