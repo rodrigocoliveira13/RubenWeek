@@ -41,6 +41,13 @@
       "place": "daycare",
       "time": "",
       "u": 1789982107705
+    },
+    "2026-10-02-am": {
+      "activity": "Daycare closed",
+      "person": "",
+      "place": "home",
+      "time": "",
+      "u": 1789983855973
     }
   },
   "meta": {
