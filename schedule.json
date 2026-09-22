@@ -65,10 +65,10 @@
     },
     "2026-10-02-am": {
       "activity": "Daycare closed",
-      "person": "",
+      "person": "p1",
       "place": "home",
       "time": "",
-      "u": 1789983855973
+      "u": 1790076987119
     },
     "2026-10-02-pm": {
       "activity": "Daycare closed",
