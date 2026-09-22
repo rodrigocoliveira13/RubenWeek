@@ -72,10 +72,10 @@
     },
     "2026-10-02-pm": {
       "activity": "Daycare closed",
-      "person": "",
+      "person": "p1",
       "place": "other",
       "time": "",
-      "u": 1789983864068
+      "u": 1790076990487
     },
     "2026-10-14-am": {
       "activity": "Neuvola",
