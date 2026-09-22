@@ -76,6 +76,13 @@
       "place": "other",
       "time": "",
       "u": 1789983864068
+    },
+    "2026-10-14-am": {
+      "activity": "Neuvola",
+      "person": "p2",
+      "place": "other",
+      "time": "09:00",
+      "u": 1790076970550
     }
   },
   "meta": {
